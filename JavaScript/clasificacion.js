@@ -1,139 +1,63 @@
-async function cargarClasificacion() {
+var contenedor = document.getElementById("lista-partidos");
+    fetch("../json/FM_partits_fem.json")
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (datos) {
 
-    const res = await fetch("../JSON/FM_partits_fem.json");
-    const partidos = await res.json();
+            var lista = datos;
 
-    const equipos = {};
+            for (var i = 0; i < lista.length; i++) {
 
-    function crearEquipo(e) {
-        if (!equipos[e.nom]) {
-            equipos[e.nom] = {
-                nombre: e.nom,
-                escudo: e.escut,
-                pj: 0, pg: 0, pe: 0, pp: 0,
-                gf: 0, gc: 0, pts: 0
-            };
-        }
-    }
+                var partido = lista[i];
 
-    partidos.forEach(p => {
-        crearEquipo(p.equip_local);
-        crearEquipo(p.equip_visitant);
+        
+                var divPartido = document.createElement("div");
+                divPartido.classList.add("partido");
 
-        const local = equipos[p.equip_local.nom];
-        const visitante = equipos[p.equip_visitant.nom];
+                var divLocal = document.createElement("div");
+                divLocal.classList.add("equip");
 
-        const [gL, gV] = p.resultat.split("-").map(Number);
+                var imgLocal = document.createElement("img");
+                imgLocal.src = partido.equip_local.escut;
 
-        local.pj++;
-        visitante.pj++;
+                var nombreLocal = document.createElement("span");
+                nombreLocal.textContent = partido.equip_local.nom;
 
-        local.gf += gL;
-        local.gc += gV;
+                divLocal.appendChild(imgLocal);
+                divLocal.appendChild(nombreLocal);
 
-        visitante.gf += gV;
-        visitante.gc += gL;
+                var divCentro = document.createElement("div");
 
-        if (gL > gV) {
-            local.pg++;
-            local.pts += 3;
-            visitante.pp++;
-        } else if (gV > gL) {
-            visitante.pg++;
-            visitante.pts += 3;
-            local.pp++;
-        } else {
-            local.pe++;
-            visitante.pe++;
-            local.pts++;
-            visitante.pts++;
-        }
-    });
+                var resultado = document.createElement("div");
+                resultado.classList.add("resultado");
+                resultado.textContent = partido.resultat;
 
-    const clasificacion = Object.values(equipos)
-        .sort((a, b) =>
-            b.pts - a.pts ||
-            (b.gf - b.gc) - (a.gf - a.gc) ||
-            b.gf - a.gf
-        );
+                
+                var fecha = document.createElement("div");
+                fecha.classList.add("data");
+                fecha.textContent = partido.data;
 
-    const tabla = document.getElementById("tabla");
-    tabla.innerHTML = "";
+                divCentro.appendChild(resultado);
+                divCentro.appendChild(fecha);
 
-    clasificacion.forEach((e, i) => {
-        tabla.innerHTML += `
-        <tr>
-            <td class="pos">${i + 1}</td>
-            <td class="equipo">
-                <img src="${e.escudo}" alt="${e.nombre}" class="escudo-clasificacion">
-                ${e.nombre}
-            </td>
-            <td>${e.pj}</td>
-            <td>${e.pg}</td>
-            <td>${e.pe}</td>
-            <td>${e.pp}</td>
-            <td>${e.gf}</td>
-            <td>${e.gc}</td>
-            <td><strong>${e.pts}</strong></td>
-        </tr>
-        `;
-    });
-}
+    
+                var divVisitante = document.createElement("div");
+                divVisitante.classList.add("equip");
 
-async function cargarGolejadores() {
+                var nombreVisitante = document.createElement("span");
+                nombreVisitante.textContent = partido.equip_visitant.nom;
 
-    const escudoMap = {
-        "FC Barcelona": "../Imagenes/logoF/logo_fcb.png",
-        "Real Madrid CF": "../Imagenes/logoF/logo_madrid.png",
-        "Atlético de Madrid": "../Imagenes/logoF/logo_atmadrid.png",
-        "Sevilla FC": "../Imagenes/logoF/logo_sevilla.png",
-        "Real Sociedad": "../Imagenes/logoF/logo_sociedad.png",
-        "Real Betis": "../Imagenes/logoF/logo_betis.png",
-        "Athletic Club": "../Imagenes/logoF/logo_athleticclub.png",
-        "Valencia CF": "../Imagenes/logoF/logo_valencia.png",
-        "RCD Espanyol": "../Imagenes/logoF/logo_espanyol.png",
-        "Deportivo Abanca": "../Imagenes/logoF/logo_deportivo.png",
-        "SD Eibar": "../Imagenes/logoF/logo_eibar.png",
-        "Granada CF": "../Imagenes/logoF/logo_granada.png",
-        "Levante UD": "../Imagenes/logoF/logo_levante.png"
-    };
+                var imgVisitante = document.createElement("img");
+                imgVisitante.src = partido.equip_visitant.escut;
 
-    const res = await fetch("../JSON/jugadores.json");
-    const equipo = await res.json();
+                divVisitante.appendChild(nombreVisitante);
+                divVisitante.appendChild(imgVisitante);
 
-    let jugadores = [];
+                divPartido.appendChild(divLocal);
+                divPartido.appendChild(divCentro);
+                divPartido.appendChild(divVisitante);
 
-    equipo.forEach(equip => {
-        equip.jugadors.forEach(j => {
-            if (j.posicio === "Davanter") {
-                jugadores.push({
-                    nom: j.nomPersona,
-                    foto: j.foto,
-                    equip: equip.equip,
-                    escudo: escudoMap[equip.equip] || ""
-                });
+                contenedor.appendChild(divPartido);
             }
         });
-    });
-
-    const cont = document.getElementById("mejorejg");
-    const mejores = ["MVP"];
-    cont.innerHTML = "";
-
-    jugadores.slice(0, 6).forEach((j, i) => {
-        cont.innerHTML += `
-        <div class="jugadora">
-            <div class="mejores">${mejores[i] || "MVP"}</div>
-            <img class="foto-jugadora" src="${j.foto}" alt="${j.nom}">
-            <h3>${j.nom}</h3>
-            <p>
-                <img class="escudo" src="${j.escudo}" alt="${j.equip}">
-                ${j.equip}
-            </p>
-        </div>
-        `;
-    });
-}
-
-cargarClasificacion();
-cargarGolejadores();
